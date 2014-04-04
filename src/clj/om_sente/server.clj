@@ -37,7 +37,9 @@
   ;; right now we just echo back anything we receive
   (println "handle-data" data)
   (let [[ev-id & payload] event]
-    (chsk-send! client-uuid [:test/reply (first payload)]))
+    (case ev-id
+      :test/echo (chsk-send! client-uuid [:test/reply (first payload)])
+      nil))
   (println "sent reply"))
 
 (defn -main [& args]

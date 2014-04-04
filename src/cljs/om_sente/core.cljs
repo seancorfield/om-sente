@@ -41,8 +41,10 @@
       (go (loop []
             (js/alert "waiting for data")
             (let [[ev-id & payload] (<! ch-chsk)]
-              (js/alert "got " + ev-id)
-              (om/set-state! owner :text (first payload)))
+              (js/alert "got " + (str  ev-id) + " " + (first payload))
+              (case ev-id
+                :test/reply (om/set-state! owner :text (first payload))
+                nil))
             (recur))))
     om/IRenderState
     (render-state [this {:keys [text]}]
