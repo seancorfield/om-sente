@@ -26,7 +26,7 @@
       {:text ""})
     om/IRenderState
     (render-state [this {:keys [text]}]
-      (dom/input #js {:ref "data" :type "text" :value (om/value text)
+      (dom/input #js {:ref "data" :type "text" :value text
                       :onChange #(om/set-state! owner :text
                                                 (.. % -target -value))
                       :onKeyPress #(send-field % text)}))))
@@ -39,12 +39,12 @@
     om/IWillMount
     (will-mount [this]
       (go (loop []
-            (let [[op & args :as event] (<! ch-chsk)]
+            (let [[op arg] (<! ch-chsk)]
               (case op
                 :chsk/recv
-                (let [[ev-id & payload] (first args)]
+                (let [[ev-id payload] arg]
                   (case ev-id
-                    :test/reply (om/set-state! owner :text (first payload))
+                    :test/reply (om/set-state! owner :text payload)
                     nil))
                 nil))
             (recur))))
