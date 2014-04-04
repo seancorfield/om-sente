@@ -35,9 +35,10 @@
   "Main event processor."
   [{:keys [client-uuid ring-req event] :as data}]
   ;; right now we just echo back anything we receive
-  (println "handle-data" event)
+  (println "handle-data" data)
   (let [[ev-id & payload] event]
-    (chsk-send! "test" [:test/reply (first payload)])))
+    (chsk-send! client-uuid [:test/reply (first payload)]))
+  (println "sent reply"))
 
 (defn -main [& args]
   (println "starting -main")
