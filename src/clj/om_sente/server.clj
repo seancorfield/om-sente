@@ -33,17 +33,18 @@
 
 (defn handle-data
   "Main event processor."
-  [[event & args :as data]]
+  [{:keys [client-uuid ring-req event] :as data}]
   ;; right now we just echo back anything we receive
-  (println "handle-data" data)
-  (case event
-    :test/echo (chsk-send! "test" data)))
+  (println "handle-data" event)
+  (let [[ev-id & payload] event]
+    (chsk-send! "test" [:test/reply (first payload)])))
 
 (defn -main [& args]
   (println "starting -main")
-  (go (loop [data (<! ch-chsk)]
-        (handle-data data)
-        (recur (<! ch-chsk))))
+  (go (loop []
+        (println "waiting for data...")
+        (handle-data (<! ch-chsk))
+        (recur)))
   (println "about to start server")
   (let [port (or (System/getenv "PORT") 8444)]
     (kit/run-server #'server {:port port})))
