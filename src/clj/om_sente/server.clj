@@ -19,6 +19,7 @@
   (GET  "/"   req (slurp "index.html"))
   (GET  "/ws" req (#'ring-ajax-get-ws req))
   (POST "/ws" req (#'ring-ajax-post   req))
+  (r/files "" :root "")
   (r/not-found "<p>Page not found. I has a sad!</p>"))
 
 (defn handle-reply
