@@ -19,6 +19,9 @@
   (when (== (.-keyCode e) 13)
     (chsk-send! [:test/echo text])))
 
+(defn field-change [e owner text]
+  (om/set-state! owner :text (.. e -target -value)))
+
 (defn field-view [app owner]
   (reify
     om/IInitState
@@ -27,8 +30,7 @@
     om/IRenderState
     (render-state [this {:keys [text]}]
       (dom/input #js {:ref "data" :type "text" :value text
-                      :onChange #(om/set-state! owner :text
-                                                (.. % -target -value))
+                      :onChange #(field-change % owner text)
                       :onKeyPress #(send-field % text)}))))
 
 (defn data-view [app owner]
