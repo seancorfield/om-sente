@@ -8,7 +8,9 @@
                  [om "0.5.3"]
                  [com.taoensso/sente "0.9.0"]
                  [http-kit "2.1.18"]
-                 [compojure "1.1.6"]]
+                 [compojure "1.1.6"]
+                 [ring/ring-core "1.2.2"]
+                 [jetty/javax.servlet "5.1.12"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]]
 
