@@ -1,7 +1,9 @@
 (ns om-sente.core
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [taoensso.sente :as s]))
+            [taoensso.sente :as s]
+            [cljs.core.async :as async :refer [<! >! chan]]))
 
 (enable-console-print!)
 
@@ -13,8 +15,8 @@
 
 (def app-state (atom {:text "Hello world!"}))
 
-(om/root
-  (fn [app owner]
-    (dom/h1 nil (:text app)))
-  app-state
-  {:target (. js/document (getElementById "app"))})
+(om/root (fn [app owner]
+           (dom/h1 nil (:text app)))
+         app-state
+         {:target (. js/document (getElementById "app"))})
+

@@ -13,4 +13,4 @@ goog.addDependency("../cljs/reader.js", ['cljs.reader'], ['goog.string', 'cljs.c
 goog.addDependency("../taoensso/encore.js", ['taoensso.encore'], ['goog.net.XhrIoPool', 'goog.net.XhrIo', 'goog.string', 'goog.Uri.QueryData', 'cljs.core', 'goog.string.StringBuffer', 'goog.net.EventType', 'goog.structs', 'goog.string.format', 'clojure.string', 'cljs.reader', 'goog.events', 'goog.net.ErrorCode']);
 goog.addDependency("../taoensso/sente.js", ['taoensso.sente'], ['cljs.core', 'cljs.core.async', 'clojure.string', 'taoensso.encore', 'cljs.reader']);
 goog.addDependency("../om/core.js", ['om.core'], ['cljs.core', 'om.dom', 'goog.ui.IdGenerator']);
-goog.addDependency("../om_sente/core.js", ['om_sente.core'], ['cljs.core', 'om.dom', 'taoensso.sente', 'om.core']);
+goog.addDependency("../om_sente/core.js", ['om_sente.core'], ['cljs.core', 'om.dom', 'cljs.core.async', 'taoensso.sente', 'om.core']);

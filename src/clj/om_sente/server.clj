@@ -8,18 +8,24 @@
             [taoensso.sente :as s]))
 
 (let [{:keys [ch-recv send-fn ajax-post-fn
-              ajax-get-ws-fn]}
+              ajax-get-ws-fn] :as sente-info}
       (s/make-channel-socket! {})]
+  (println "SENTE:" sente-info)
   (def ring-ajax-post   ajax-post-fn)
   (def ring-ajax-get-ws ajax-get-ws-fn)
   (def ch-chsk          ch-recv)
   (def chsk-send!       send-fn))
 
+(defn root
+  [path]
+  (println "user.dir" (System/getProperty "user.dir"))
+  (str (System/getProperty "user.dir") path))
+
 (defroutes server
   (GET  "/"   req (slurp "index.html"))
   (GET  "/ws" req (#'ring-ajax-get-ws req))
   (POST "/ws" req (#'ring-ajax-post   req))
-  (r/files "/*" {:root "./"})
+  (r/files "/" {:root (root "")})
   (r/not-found "<p>Page not found. I has a sad!</p>"))
 
 (defn handle-reply
