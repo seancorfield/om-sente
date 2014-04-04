@@ -43,11 +43,7 @@
   [[event & args :as data]]
   ;; right now we just echo back anything we receive
   (case event
-    :echo (chsk-send! data 3000
-                      (fn [reply]
-                        (if (s/cb-success? reply)
-                          (handle-reply reply)
-                          (handle-error reply))))))
+    :echo (chsk-send! "test" data)))
 
 (defn -main [& args]
   (go (loop [data (<! ch-chsk)]
