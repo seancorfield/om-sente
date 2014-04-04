@@ -39,11 +39,13 @@
     om/IWillMount
     (will-mount [this]
       (go (loop []
-            (js/alert "waiting for data")
-            (let [[ev-id & payload :as msg] (<! ch-chsk)]
-              (js/alert (str "got " (pr-str msg)))
-              (case ev-id
-                :test/reply (om/set-state! owner :text (first payload))
+            (let [[op & args :as event] (<! ch-chsk)]
+              (case op
+                :chsk/recv
+                (let [[ev-id & payload] (first args)]
+                  (case ev-id
+                    :test/reply (om/set-state! owner :text (first payload))
+                    nil))
                 nil))
             (recur))))
     om/IRenderState
