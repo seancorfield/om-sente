@@ -39,7 +39,10 @@
     om/IWillMount
     (will-mount [this]
       (go (loop []
-            (om/set-state! owner :text (<! ch-chsk))
+            (js/alert "waiting for data")
+            (let [[ev-id & payload] (<! ch-chsk)]
+              (js/alert "got " + ev-id)
+              (om/set-state! owner :text (first payload)))
             (recur))))
     om/IRenderState
     (render-state [this {:keys [text]}]
