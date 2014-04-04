@@ -38,9 +38,10 @@
   (println "handle-data" data)
   (let [[ev-id & payload] event]
     (case ev-id
-      :test/echo (chsk-send! client-uuid [:test/reply (first payload)])
-      nil))
-  (println "sent reply"))
+      :test/echo (do
+                   (chsk-send! client-uuid [:test/reply (first payload)])
+                   (println "sent reply"))
+      nil)))
 
 (defn -main [& args]
   (println "starting -main")

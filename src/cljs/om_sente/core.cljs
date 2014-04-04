@@ -40,8 +40,8 @@
     (will-mount [this]
       (go (loop []
             (js/alert "waiting for data")
-            (let [[ev-id & payload] (<! ch-chsk)]
-              (js/alert "got " + (str  ev-id) + " " + (first payload))
+            (let [[ev-id & payload :as msg] (<! ch-chsk)]
+              (js/alert (str "got " (pr-str msg)))
               (case ev-id
                 :test/reply (om/set-state! owner :text (first payload))
                 nil))
