@@ -24,7 +24,9 @@
 
 (defroutes server
   (-> (routes
-       (GET  "/"   req (slurp "index.html"))
+       (GET  "/"   req {:status 200
+                        :session (assoc (:session req) :uid "test")
+                        :body (slurp "index.html")})
        (GET  "/qw" req (#'ring-ajax-get-ws req))
        (POST "/qw" req (#'ring-ajax-post   req))
        (r/files "/" {:root (root "")})
@@ -39,7 +41,7 @@
   (let [[ev-id & payload] event]
     (case ev-id
       :test/echo (do
-                   (chsk-send! client-uuid [:test/reply (first payload)])
+                   (chsk-send! "test" [:test/reply (first payload)])
                    (println "sent reply"))
       nil)))
 
