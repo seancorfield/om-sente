@@ -1,7 +1,7 @@
 (ns om-sente.server
   (:require [clojure.core.async :as async
              :refer [<! <!! chan go]]
-            [compojure.core :refer [defroutes GET POST]]
+            [compojure.core :refer [defroutes GET POST routes]]
             [compojure.handler :as h]
             [compojure.route :as r]
             [org.httpkit.server :as kit]
@@ -22,11 +22,13 @@
   (str (System/getProperty "user.dir") path))
 
 (defroutes server
-  (GET  "/"   req (slurp "index.html"))
-  (GET  "/ws" req (#'ring-ajax-get-ws req))
-  (POST "/ws" req (#'ring-ajax-post   req))
-  (r/files "/" {:root (root "")})
-  (r/not-found "<p>Page not found. I has a sad!</p>"))
+  (-> (routes
+       (GET  "/"   req (slurp "index.html"))
+       (GET  "/ws" req (#'ring-ajax-get-ws req))
+       (POST "/ws" req (#'ring-ajax-post   req))
+       (r/files "/" {:root (root "")})
+       (r/not-found "<p>Page not found. I has a sad!</p>"))
+      h/site))
 
 (defn handle-reply
   "Process callback replies."
@@ -42,12 +44,13 @@
   "Main event processor."
   [[event & args :as data]]
   ;; right now we just echo back anything we receive
+  (println "handle-data" data)
   (case event
-    :echo (chsk-send! "test" data)))
+    :test/echo (chsk-send! "test" data)))
 
 (defn -main [& args]
   (go (loop [data (<! ch-chsk)]
         (handle-data data)
         (recur (<! ch-chsk))))
   (let [port (or (System/getenv "PORT") 8444)]
-    (kit/run-server (h/site #'server) {:port port})))
+    (kit/run-server #'server {:port port})))

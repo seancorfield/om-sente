@@ -15,8 +15,43 @@
 
 (def app-state (atom {:text "Hello world!"}))
 
-(om/root (fn [app owner]
-           (dom/h1 nil (:text app)))
+(defn send-field [e text]
+  (when (== (.-keyCode e) 13)
+    (chsk-send! [:test/echo text])))
+
+(defn field-view [app owner]
+  (reify
+    om/IInitState
+    (init-state [this]
+      {:text ""})
+    om/IRenderState
+    (render-state [this {:keys [text]}]
+      (dom/input #js {:ref "data" :type "text" :value (om/value text)
+                      :onChange #(om/set-state! owner :text
+                                                (.. % -target -value))
+                      :onKeyPress #(send-field % text)}))))
+
+(defn data-view [app owner]
+  (reify
+    om/IInitState
+    (init-state [this]
+      {:text "none"})
+    om/IWillMount
+    (will-mount [this]
+      (go (loop []
+            (om/set-state! owner :text (<! ch-chsk))
+            (recur))))
+    om/IRenderState
+    (render-state [this {:keys [text]}]
+      (dom/div nil text))))
+
+(defn app-view [app owner]
+  (dom/div nil
+           (dom/h1 nil "Test Sente")
+           (om/build field-view app {})
+           (om/build data-view app {})))
+
+(om/root app-view
          app-state
          {:target (. js/document (getElementById "app"))})
 
