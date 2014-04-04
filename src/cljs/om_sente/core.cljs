@@ -8,7 +8,7 @@
 (enable-console-print!)
 
 (let [{:keys [chsk ch-recv send-fn]}
-      (s/make-channel-socket! "/ws" {} {:type :auto})]
+      (s/make-channel-socket! "/qw" {} {:type :auto})]
   (def chsk       chsk)
   (def ch-chsk    ch-recv)
   (def chsk-send! send-fn))

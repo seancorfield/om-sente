@@ -8,13 +8,14 @@
             [taoensso.sente :as s]))
 
 (let [{:keys [ch-recv send-fn ajax-post-fn
-              ajax-get-ws-fn] :as sente-info}
+              ajax-get-or-ws-handshake-fn] :as sente-info}
       (s/make-channel-socket! {})]
   (println "SENTE:" sente-info)
   (def ring-ajax-post   ajax-post-fn)
-  (def ring-ajax-get-ws ajax-get-ws-fn)
+  (def ring-ajax-get-ws ajax-get-or-ws-handshake-fn)
   (def ch-chsk          ch-recv)
-  (def chsk-send!       send-fn))
+  (def chsk-send!       send-fn)
+  (println "defs in place"))
 
 (defn root
   [path]
@@ -24,21 +25,11 @@
 (defroutes server
   (-> (routes
        (GET  "/"   req (slurp "index.html"))
-       (GET  "/ws" req (#'ring-ajax-get-ws req))
-       (POST "/ws" req (#'ring-ajax-post   req))
+       (GET  "/qw" req (#'ring-ajax-get-ws req))
+       (POST "/qw" req (#'ring-ajax-post   req))
        (r/files "/" {:root (root "")})
        (r/not-found "<p>Page not found. I has a sad!</p>"))
       h/site))
-
-(defn handle-reply
-  "Process callback replies."
-  [reply]
-  nil)
-
-(defn handle-error
-  "Process callback errors."
-  [reply]
-  nil)
 
 (defn handle-data
   "Main event processor."
@@ -49,8 +40,12 @@
     :test/echo (chsk-send! "test" data)))
 
 (defn -main [& args]
+  (println "starting -main")
   (go (loop [data (<! ch-chsk)]
         (handle-data data)
         (recur (<! ch-chsk))))
+  (println "about to start server")
   (let [port (or (System/getenv "PORT") 8444)]
     (kit/run-server #'server {:port port})))
+
+(println "server loaded")
