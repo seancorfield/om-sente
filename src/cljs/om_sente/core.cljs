@@ -18,7 +18,7 @@
 (defn send-field [e owner state]
   (when (== (.-keyCode e) 13)
     (chsk-send! [:test/echo (:text state)])
-    (set! (.-value (om/get-node owner "data")) "")))
+    (om/set-state! owner :text "")))
 
 (defn field-change [e owner state]
   (let [value (.. e -target -value)]
