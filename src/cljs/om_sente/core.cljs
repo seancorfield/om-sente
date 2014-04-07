@@ -55,10 +55,13 @@
       (dom/div nil text))))
 
 (defn app-view [app owner]
-  (dom/div nil
-           (dom/h1 nil "Test Sente")
-           (om/build field-view app {})
-           (om/build data-view app {})))
+  (reify
+    om/IRender
+    (render [this]
+      (dom/div nil
+               (dom/h1 nil "Test Sente")
+               (om/build field-view app {})
+               (om/build data-view app {})))))
 
 (om/root app-view
          app-state
