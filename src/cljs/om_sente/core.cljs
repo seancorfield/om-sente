@@ -15,12 +15,14 @@
 
 (def app-state (atom {:text "Hello world!"}))
 
-(defn send-field [e text]
+(defn send-field [e owner state]
   (when (== (.-keyCode e) 13)
-    (chsk-send! [:test/echo text])))
+    (chsk-send! [:test/echo (:text state)])
+    (set! (.-value (om/get-node owner "data")) "")))
 
-(defn field-change [e owner text]
-  (om/set-state! owner :text (.. e -target -value)))
+(defn field-change [e owner state]
+  (let [value (.. e -target -value)]
+    (om/set-state! owner :text value)))
 
 (defn field-view [app owner]
   (reify
