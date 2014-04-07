@@ -30,10 +30,10 @@
     (init-state [this]
       {:text ""})
     om/IRenderState
-    (render-state [this {:keys [text]}]
-      (dom/input #js {:ref "data" :type "text" :value text
-                      :onChange #(field-change % owner text)
-                      :onKeyPress #(send-field % text)}))))
+    (render-state [this state]
+      (dom/input #js {:ref "data" :type "text" :value (:text state)
+                      :onChange #(field-change % owner state)
+                      :onKeyPress #(send-field % owner state)}))))
 
 (defn data-view [app owner]
   (reify
