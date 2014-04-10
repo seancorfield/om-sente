@@ -92,20 +92,19 @@
   (om/set-state! owner :session/state :secure))
 
 (defn test-session
-  "If we don't know the session state, ask the server for it."
+  "Ping the server to update the sesssion state."
   [owner]
-  (when (= :unknown (om/get-state owner :session/state))
-    (chsk-send! [:session/status])))
+  (chsk-send! [:session/status]))
 
 (defn event-loop
   "Handle inbound events."
   [app owner]
   (go (loop [[op arg] (<! ch-chsk)]
+        (println "-" op)
         (case op
           :chsk/recv (handle-event arg app owner)
           ;; we ignore other Sente events
-          nil)
-        (test-session owner)
+          (test-session owner))
         (recur (<! ch-chsk)))))
 
 (defn attempt-login
