@@ -45,7 +45,8 @@
 
 (defmethod handle-event :session/state
   [[_ state] app owner]
-  (om/update! app [:session/state] state))
+  (js/alert (str "session/state: " (name state)))
+  (om/set-state! owner :session/state state))
 
 (defmethod handle-event :auth/fail
   [_ app owner]
@@ -54,7 +55,7 @@
 (defmethod handle-event :auth/success
   [_ app owner]
   (om/update! app [:notify/error] nil)
-  (om/update! app [:session/state] :secure))
+  (om/set-state! owner :session/state :secure))
 
 (defn event-loop [app owner]
   (go (loop []
@@ -96,25 +97,38 @@
                              (dom/button #js {:onClick #(login % app owner)}
                                         "Login"))))))
 
+(defn test-session [owner]
+  (when (= :unknown (om/get-state owner :session/state))
+    (js/alert "will-mount send session/status query")
+    (chsk-send! [:session/status])))
+
 (defn app-view [app owner]
   (reify
+    om/IInitState
+    (init-state [this]
+      {:session/state :unknown})
     om/IWillMount
     (will-mount [this]
-                (event-loop app owner)
-                (when (= :unknown (:session/state app))
-                  (js/alert "will-mount send session/status query")
-                  (chsk-send! [:session/status])))
-    om/IRender
-    (render [this]
-            (js/alert "render app")
-            (if (= :secure (:session/state app))
-              (dom/div nil
-                       (dom/h1 nil "Test Sente")
-                       (om/build field-view app {:opts {:name "data"}})
-                       (om/build data-view app {}))
-              (om/build login-view app {})))))
+      (event-loop app owner))
+    om/IDidMount
+    (did-mount [this]
+      (test-session owner))
+    om/IRenderState
+    (render-state [this state]
+      (case (:session/state state)
+        :secure
+        (dom/div nil
+                 (dom/h1 nil "Test Sente")
+                 (om/build field-view app {:opts {:name "data"}})
+                 (om/build data-view app {}))
+        :open
+        (om/build login-view app {})
+        :unknown
+        (dom/div nil "Loading...")
+        ;;(om/build login-view app {})
+        ))))
 
-(def app-state (atom {:session/state :unknown}))
+(def app-state (atom {}))
 
 (om/root app-view
          app-state
