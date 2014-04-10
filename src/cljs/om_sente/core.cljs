@@ -13,57 +13,108 @@
   (def ch-chsk    ch-recv)
   (def chsk-send! send-fn))
 
-(def app-state (atom {:text "Hello world!"}))
-
 (defn send-field [e owner state]
   (when (== (.-keyCode e) 13)
-    (chsk-send! [:test/echo (:text state)])
+    (chsk-send! [:test/echo (clojure.string/reverse (:text state))])
     (om/set-state! owner :text "")))
 
 (defn field-change [e owner state]
   (let [value (.. e -target -value)]
     (om/set-state! owner :text value)))
 
-(defn field-view [app owner]
+(defn field-view [app owner opts]
   (reify
     om/IInitState
     (init-state [this]
       {:text ""})
     om/IRenderState
     (render-state [this state]
-      (dom/input #js {:ref "data" :type "text" :value (:text state)
+      (dom/input #js {:ref (:name opts) :type (or (:type opts) "text") :value (:text state)
                       :onChange #(field-change % owner state)
                       :onKeyPress #(send-field % owner state)}))))
+
+(defmulti handle-event (fn [event app owner] (first event)))
+
+(defmethod handle-event :test/reply
+  [[_ msg] app owner]
+  (om/set-state! owner :text msg))
+
+(defmethod handle-event :default
+  [_ app owner]
+  nil)
+
+(defmethod handle-event :session/state
+  [[_ state] app owner]
+  (om/update! app [:session/state] state))
+
+(defmethod handle-event :auth/fail
+  [_ app owner]
+  (om/update! app [:notify/error] "Invalid credentials"))
+
+(defmethod handle-event :auth/success
+  [_ app owner]
+  (om/update! app [:notify/error] nil)
+  (om/update! app [:session/state] :secure))
+
+(defn event-loop [app owner]
+  (go (loop []
+        (let [[op arg] (<! ch-chsk)]
+          (case op
+            :chsk/recv (handle-event arg app owner)
+            nil))
+        (recur))))
 
 (defn data-view [app owner]
   (reify
     om/IInitState
     (init-state [this]
       {:text "none"})
-    om/IWillMount
-    (will-mount [this]
-      (go (loop []
-            (let [[op arg] (<! ch-chsk)]
-              (case op
-                :chsk/recv
-                (let [[ev-id payload] arg]
-                  (case ev-id
-                    :test/reply (om/set-state! owner :text payload)
-                    nil))
-                nil))
-            (recur))))
     om/IRenderState
     (render-state [this {:keys [text]}]
       (dom/div nil text))))
 
-(defn app-view [app owner]
+(defn login [e app owner]
+  nil)
+
+(defn login-view [app owner]
   (reify
     om/IRender
     (render [this]
-      (dom/div nil
-               (dom/h1 nil "Test Sente")
-               (om/build field-view app {})
-               (om/build data-view app {})))))
+            (dom/div #js {:style {:align "center" :width "25%"}}
+                     (if-let [error (:notify/error app)]
+                       (dom/div #js {:style "color: red;"}
+                                error))
+                     (dom/h1 nil "Login")
+                     (dom/div #js {:style {:width "100%"}}
+                             (dom/p nil "Username")
+                             (om/build field-view app {:opts {:name "username"}}))
+                     (dom/div #js {:style {:width "100%"}}
+                             (dom/p nil "Password")
+                             (om/build field-view app {:opts {:name "password"
+                                                              :type "password"}}))
+                     (dom/div #js {:style {:width "50%" :align "center"}}
+                             (dom/button #js {:onClick #(login % app owner)}
+                                        "Login"))))))
+
+(defn app-view [app owner]
+  (reify
+    om/IWillMount
+    (will-mount [this]
+                (event-loop app owner)
+                (when (= :unknown (:session/state app))
+                  (js/alert "will-mount send session/status query")
+                  (chsk-send! [:session/status])))
+    om/IRender
+    (render [this]
+            (js/alert "render app")
+            (if (= :secure (:session/state app))
+              (dom/div nil
+                       (dom/h1 nil "Test Sente")
+                       (om/build field-view app {:opts {:name "data"}})
+                       (om/build data-view app {}))
+              (om/build login-view app {})))))
+
+(def app-state (atom {:session/state :unknown}))
 
 (om/root app-view
          app-state
