@@ -7,6 +7,7 @@
 (ns om-sente.server
   (:require [clojure.core.async :as async
              :refer [<! <!! chan go]]
+            [clojure.core.cache :as cache]
             [compojure.core :refer [defroutes GET POST routes]]
             [compojure.handler :as h]
             [compojure.route :as r]
@@ -22,6 +23,32 @@
   (def ring-ajax-get-ws ajax-get-or-ws-handshake-fn)
   (def ch-chsk          ch-recv)
   (def chsk-send!       send-fn))
+
+;; session cache to maintain authentication - so we can rely
+;; entirely on socket communication instead of needing to login
+;; to the application first: 5 minutes of inactive will log you out
+
+(def session-map (atom (cache/ttl-cache-factory {} :ttl (* 5 60 1000))))
+
+(defn keep-alive
+  "Given a UID, keep it alive."
+  [uid]
+  (println "keep-alive" uid (java.util.Date.))
+  (when-let [token (get @session-map uid)]
+    (swap! session-map assoc uid token)))
+
+(defn add-token
+  "Given a UID and a token, remember it."
+  [uid token]
+  (println "add-token" uid token (java.util.Date.))
+  (swap! session-map assoc uid token))
+
+(defn get-token
+  "Given a UID, retrieve the associated token, if any."
+  [uid]
+  (let [token (get @session-map uid)]
+    (println "get-token" uid token (java.util.Date.))
+    token))
 
 (defn root
   "Return the absolute (root-relative) version of the given path."
@@ -67,35 +94,50 @@
   "Handle events based on the event ID."
   (fn [[ev-id ev-arg] ring-req] ev-id))
 
-;; Reply with the session state - either open or secure.
-;; Note: this doesn't work yet since :token is never added to the session!
-
-(defmethod handle-event :session/status
-  [_ req]
+(defn session-status
+  "Tell the server what state this user's session is in."
+  [req]
   (chsk-send! (session-uid req)
-              [:session/state (if (get-in req [:session :token])
+              [:session/state (if (get-token (session-uid req))
                                 :secure
                                 :open)]))
 
+;; Reply with the session state - either open or secure.
+
+(defmethod handle-event :session/status
+  [_ req]
+  (session-status req))
+
 ;; Reply with authentication failure or success.
-;; This should update the session with :token but Sente doesn't allow session updates.
+;; For a successful authentication, remember the login.
 
 (defmethod handle-event :session/auth
   [[_ [username password]] req]
   (let [valid (and (= "admin" username)
-                   (= "secret" password))]
+                   (= "secret" password))
+        uid (session-uid req)]
+    (when valid
+      (add-token uid (unique-id)))
     (chsk-send! (session-uid req)
                 [(if valid :auth/success :auth/fail)])))
 
 ;; Reply with the message in angle brackets.
+;; Also record activity to keep session alive.
 
 (defmethod handle-event :test/echo
   [[_ msg] req]
-  (chsk-send! (session-uid req) [:test/reply (str "<" msg ">")]))
+  (let [uid (session-uid)]
+    (keep-alive uid)
+    (chsk-send! uid [:test/reply (str "<" msg ">")])))
+
+;; When the client pings us, send back the session state:
+
+(defmethod handle-event :chsk/ping
+  [_ req]
+  (session-status req))
 
 ;; Handle unknown events.
 ;; Note: this includes the Sente implementation events like:
-;; - :chsk/ping
 ;; - :chsk/uidport-open
 ;; - :chsk/uidport-close
 
@@ -107,6 +149,7 @@
   "Handle inbound events."
   []
   (go (loop [{:keys [client-uuid ring-req event] :as data} (<! ch-chsk)]
+        (println "-" event)
         (handle-event event ring-req)
         (recur (<! ch-chsk)))))
 
