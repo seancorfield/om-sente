@@ -6,10 +6,9 @@ I don't claim any best practices for either and would welcome feedback!
 
 # Running this example
 
-Git clone it locally, then run the following commands in separate shells:
+Git clone it locally, then run the following commands:
 
-    lein cljsbuild auto om-sente
-    
+    lein cljsbuild once om-sente
     lein run -m om-sente.server
 
 By default it starts [http-kit](http://http-kit.org/) on port 8444 but you can override that with an environment variable:
