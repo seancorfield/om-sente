@@ -152,7 +152,8 @@
   (reify
     om/IRender
     (render [this]
-            (dom/div nil
+            (dom/div #js {:style #js {:margin "auto" :width "1000"
+                                      :border "solid blue 1px" :padding 20}}
                      (dom/h1 nil "Test Sente")
                      (om/build text-sender app {})
                      (om/build data-view app {})))))
