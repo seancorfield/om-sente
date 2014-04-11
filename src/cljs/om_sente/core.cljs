@@ -9,9 +9,12 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [taoensso.sente :as s]
-            [cljs.core.async :as async :refer [<! >! chan]]))
+            [cljs.core.async :as async :refer [<! >! chan]]
+            [strokes :refer [d3]]))
 
 (enable-console-print!)
+
+(strokes/bootstrap)
 
 ;; create the Sente web socket connection stuff when we are loaded:
 
