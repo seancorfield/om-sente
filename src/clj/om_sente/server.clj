@@ -97,10 +97,8 @@
 (defn session-status
   "Tell the server what state this user's session is in."
   [req]
-  (chsk-send! (session-uid req)
-              [:session/state (if (get-token (session-uid req))
-                                :secure
-                                :open)]))
+  (when-let [uid (session-uid req)]
+    (chsk-send! uid [:session/state (if (get-token uid) :secure :open)])))
 
 ;; Reply with the session state - either open or secure.
 
@@ -113,20 +111,19 @@
 
 (defmethod handle-event :session/auth
   [[_ [username password]] req]
-  (let [valid (and (= "admin" username)
-                   (= "secret" password))
-        uid (session-uid req)]
-    (when valid
-      (add-token uid (unique-id)))
-    (chsk-send! (session-uid req)
-                [(if valid :auth/success :auth/fail)])))
+  (when-let [uid (session-uid req)]
+    (let [valid (and (= "admin" username)
+                     (= "secret" password))]
+      (when valid
+        (add-token uid (unique-id)))
+      (chsk-send! uid [(if valid :auth/success :auth/fail)]))))
 
 ;; Reply with the message in angle brackets.
 ;; Also record activity to keep session alive.
 
 (defmethod handle-event :test/echo
   [[_ msg] req]
-  (let [uid (session-uid)]
+  (when-let [uid (session-uid req)]
     (keep-alive uid)
     (chsk-send! uid [:test/reply (str "<" msg ">")])))
 
