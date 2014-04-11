@@ -31,11 +31,11 @@
     (om/set-state! owner field value)))
 
 (defn send-text-on-enter
-  "When user presses ENTER, send the reversed value of the field to the server
+  "When user presses ENTER, send the value of the field to the server
   and clear the field's input state."
   [e owner state]
   (when (== (.-keyCode e) 13)
-    (chsk-send! [:test/echo (clojure.string/reverse (:text state))])
+    (chsk-send! [:test/echo (:text state)])
     (om/set-state! owner :text "")))
 
 (defn text-sender
