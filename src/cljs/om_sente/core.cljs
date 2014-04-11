@@ -88,7 +88,6 @@
 
 (defmethod handle-event :auth/success
   [_ app owner]
-  (om/update! app [:notify/error] nil)
   (om/set-state! owner :session/state :secure))
 
 (defn test-session
@@ -112,6 +111,7 @@
   [e app owner]
   (let [username (-> (om/get-node owner "username") .-value)
         password (-> (om/get-node owner "password") .-value)]
+    (om/update! app [:notify/error] nil)
     (chsk-send! [:session/auth [username password]]))
   ;; suppress the form submit:
   false)
@@ -125,21 +125,22 @@
                 {:username "" :password ""})
     om/IRenderState
     (render-state [this state]
-                  (dom/div #js {:style {:align "center" :width "25%"}}
+                  (dom/div #js {:style #js {:margin "auto" :width "175"
+                                            :border "solid blue 1px" :padding 20}}
                            (if-let [error (:notify/error app)]
-                             (dom/div #js {:style {:color "red"}}
+                             (dom/div #js {:style #js {:color "red"}}
                                       error))
                            (dom/h1 nil "Login")
                            (dom/form #js {:onSubmit #(attempt-login % app owner)}
-                                     (dom/div #js {:style {:width "100%"}}
+                                     (dom/div nil
                                               (dom/p nil "Username")
                                               (dom/input #js {:ref "username" :type "text" :value (:username state)
                                                               :onChange #(field-change % owner :username)}))
-                                     (dom/div #js {:style {:width "100%"}}
+                                     (dom/div nil
                                               (dom/p nil "Password")
                                               (dom/input #js {:ref "password" :type "password" :value (:password state)
                                                               :onChange #(field-change % owner :password)}))
-                                     (dom/div #js {:style {:width "50%" :align "center"}}
+                                     (dom/div nil
                                               (dom/input #js {:type "submit" :value "Login"})))))))
 
 (defn secured-application
@@ -166,7 +167,7 @@
                 (event-loop app owner))
     om/IRenderState
     (render-state [this state]
-                  (dom/div #js {:style {:width "100%"}}
+                  (dom/div #js {:style #js {:width "100%"}}
                            (case (:session/state state)
                              :secure
                              (om/build secured-application app {})
