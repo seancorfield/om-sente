@@ -57,7 +57,6 @@
   (reify
     om/IRender
     (render [this]
-            (println opts)
             (dom/rect #js {:fill (:color opts) :width (:width opts) :height (:height opts)
                                  :x (:offset opts) :y (- (:available opts) (:height opts))}))))
 
@@ -80,10 +79,8 @@
             (dom/div nil
                      (dom/p nil (str "The string " (:data/text app) " represented as a bar chart:"))
                      (let [data (map #(.charCodeAt %) (:data/text app))]
-                       (println data)
                        (apply dom/svg #js {:id "display" :width 960 :height 500}
                               (map (fn [v o]
-                                     (println v o)
                                      (let [c (make-color v)]
                                        (om/build chart-bar app
                                                  {:opts {:width 20 :height (* 3 v) :color c
