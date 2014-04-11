@@ -47,46 +47,68 @@
                 {:text ""})
     om/IRenderState
     (render-state [this state]
-                  (dom/input #js {:type "text" :value (:text state)
+                  (dom/input #js {:type "text" :value (:text state) :size 32 :maxLength 32
                                   :onChange #(field-change % owner :text)
                                   :onKeyPress #(send-text-on-enter % owner state)}))))
 
-(defn chart-bar
-  "Bar chart component."
-  [app owner opts]
-  (reify
-    om/IRender
-    (render [this]
-            (dom/rect #js {:fill (:color opts) :width (:width opts) :height (:height opts)
-                                 :x (:offset opts) :y (- (:available opts) (:height opts))}))))
-
 (defn make-color
-  "Given a value (height) make a color for it."
+  "Given a value (height) make a color for it. Returns #hex string."
   [v]
-  (str "#"
-       (when (< v 16) "f")
-       (.toString v 16)
-       "80"
-       (when (< (- 255 v) 16) "f")
-       (.toString (- 255 v) 16)))
+  (let [r v
+        g (int (- 150 (/ v 3)))
+        b (int (/ v 2))
+        hex (fn [n] (str (when (< n 16) "f") (.toString n 16)))]
+    (str "#" (hex r) (hex g) (hex b))))
 
-(defn data-view
+(defn make-target
+  "Turn a string into a sequence of its characters' ASCII values."
+  [s]
+  (map #(.charCodeAt %) s))
+
+(def animation-tick 75)
+(def animation-factor 15)
+(def graph-scale 4)
+(def graph-bar-width 30)
+(def graph-height 500)
+
+(defn animated-bar-graph
   "Component that displays the data (text) returned by the server after processing."
   [app owner]
   (reify
-    om/IRender
-    (render [this]
-            (dom/div nil
-                     (dom/p nil (str "The string " (:data/text app) " represented as a bar chart:"))
-                     (let [data (map #(.charCodeAt %) (:data/text app))]
-                       (apply dom/svg #js {:id "display" :width 960 :height 500}
-                              (map (fn [v o]
-                                     (let [c (make-color v)]
-                                       (om/build chart-bar app
-                                                 {:opts {:width 20 :height (* 3 v) :color c
-                                                         :available 500 :offset (* 21 o)}})))
-                                   data
-                                   (range))))))))
+    om/IWillMount
+    (will-mount [this]
+                (js/setTimeout (fn tick []
+                                 (let [target-data (make-target (:data/text @app))
+                                       cur-data    (or (om/get-state owner :data) [])
+                                       next-data   (if (< (count cur-data) (count target-data))
+                                                     (vec (take (count target-data) (concat cur-data (repeat 0))))
+                                                     (vec (take (count target-data) cur-data)))]
+                                   (om/set-state! owner :data
+                                                  (mapv (fn [d y]
+                                                          (if (< d y)
+                                                            (min y (+ (/ y animation-factor) d))
+                                                            (max y (- (/ y animation-factor) d))))
+                                                        next-data
+                                                        target-data))
+                                   (js/setTimeout tick animation-tick)))
+                               animation-tick))
+    om/IRenderState
+    (render-state [this {:keys [data]}]
+                  (let [s (:data/text app)
+                        t (make-target s)]
+                    (dom/div nil
+                             (dom/p nil (str "The string '" s "' represented as a bar chart:"))
+                             (apply dom/svg #js {:id "display" :width "100%" :height graph-height}
+                                    (map (fn [v1 v2 o]
+                                           (let [h (* graph-scale v1)]
+                                             (dom/rect #js {:fill (make-color v2)
+                                                            :width graph-bar-width
+                                                            :height h
+                                                            :x (* (inc graph-bar-width) o)
+                                                            :y (- graph-height h)})))
+                                         data
+                                         t
+                                         (range))))))))
 
 (defmulti handle-event
   "Handle events based on the event ID."
@@ -185,7 +207,7 @@
                                       :border "solid blue 1px" :padding 20}}
                      (dom/h1 nil "Test Sente")
                      (om/build text-sender app {})
-                     (om/build data-view app {})))))
+                     (om/build animated-bar-graph app {})))))
 
 (defn application
   "Component that represents our application. Maintains session state.
@@ -211,7 +233,7 @@
 
 (def app-state
   "Our very minimal application state - a piece of text that we display."
-  (atom {:data/text "none"}))
+  (atom {:data/text "Enter a string and press RETURN!"}))
 
 (om/root application
          app-state
