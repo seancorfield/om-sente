@@ -84,7 +84,7 @@
                                      (let [c (make-color v)]
                                        (om/build chart-bar app
                                                  {:opts {:width 20 :height (* 3 v) :color c
-                                                         :available 500 :offset (* 20 o)}})))
+                                                         :available 500 :offset (* 21 o)}})))
                                    data
                                    (range))))))))
 
