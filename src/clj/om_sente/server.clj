@@ -118,14 +118,16 @@
         (add-token uid (unique-id)))
       (chsk-send! uid [(if valid :auth/success :auth/fail)]))))
 
-;; Reply with the message in angle brackets.
+;; Reply with the same message, followed by the reverse of the message a few seconds later.
 ;; Also record activity to keep session alive.
 
 (defmethod handle-event :test/echo
   [[_ msg] req]
   (when-let [uid (session-uid req)]
     (keep-alive uid)
-    (chsk-send! uid [:test/reply (str "<" msg ">")])))
+    (chsk-send! uid [:test/reply msg])
+    (Thread/sleep 3000)
+    (chsk-send! uid [:test/reply (clojure.string/reverse msg)])))
 
 ;; When the client pings us, send back the session state:
 
