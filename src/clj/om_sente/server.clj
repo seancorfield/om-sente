@@ -84,8 +84,8 @@
 (defroutes server
   (-> (routes
        (GET  "/"   req (#'index req))
-       (GET  "/qw" req (#'ring-ajax-get-ws req))
-       (POST "/qw" req (#'ring-ajax-post   req))
+       (GET  "/ws" req (#'ring-ajax-get-ws req))
+       (POST "/ws" req (#'ring-ajax-post   req))
        (r/files "/" {:root (root "")})
        (r/not-found "<p>Page not found. I has a sad!</p>"))
       h/site))
