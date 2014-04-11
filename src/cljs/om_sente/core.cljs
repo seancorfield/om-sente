@@ -51,13 +51,45 @@
                                   :onChange #(field-change % owner :text)
                                   :onKeyPress #(send-text-on-enter % owner state)}))))
 
+(defn chart-bar
+  "Bar chart component."
+  [app owner opts]
+  (reify
+    om/IRender
+    (render [this]
+            (println opts)
+            (dom/rect #js {:fill (:color opts) :width (:width opts) :height (:height opts)
+                                 :x (:offset opts) :y (- (:available opts) (:height opts))}))))
+
+(defn make-color
+  "Given a value (height) make a color for it."
+  [v]
+  (str "#"
+       (when (< v 16) "f")
+       (.toString v 16)
+       "80"
+       (when (< (- 255 v) 16) "f")
+       (.toString (- 255 v) 16)))
+
 (defn data-view
   "Component that displays the data (text) returned by the server after processing."
   [app owner]
   (reify
     om/IRender
     (render [this]
-            (dom/div nil (:data/text app)))))
+            (dom/div nil
+                     (dom/p nil (str "The string " (:data/text app) " represented as a bar chart:"))
+                     (let [data (map #(.charCodeAt %) (:data/text app))]
+                       (println data)
+                       (apply dom/svg #js {:id "display" :width 960 :height 500}
+                              (map (fn [v o]
+                                     (println v o)
+                                     (let [c (make-color v)]
+                                       (om/build chart-bar app
+                                                 {:opts {:width 20 :height (* 3 v) :color c
+                                                         :available 500 :offset (* 20 o)}})))
+                                   data
+                                   (range))))))))
 
 (defmulti handle-event
   "Handle events based on the event ID."
