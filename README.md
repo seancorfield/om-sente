@@ -1,6 +1,6 @@
-# Om / Sente / SVG (D3) Example
+# Om / Sente / SVG Example
 
-This is intended as a simple proof of concept showing [Om](https://github.com/swannodette/om) and [Sente](https://github.com/ptaoussanis/sente) playing nice together with some animated SVG-based graphs (and the start of pulling in D3)..
+This is intended as a simple proof of concept showing [Om](https://github.com/swannodette/om) and [Sente](https://github.com/ptaoussanis/sente) playing nice together with some animated SVG-based graphs.
 
 I don't claim any best practices for either and would welcome feedback!
 

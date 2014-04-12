@@ -9,7 +9,6 @@
                  [om "0.5.3"]
                  [sablono "0.2.15"]
                  [com.taoensso/sente "0.9.0"]
-                 [net.drib/strokes "0.5.1"]
                  [http-kit "2.1.18"]
                  [compojure "1.1.6"]
                  [ring/ring-core "1.2.2"]

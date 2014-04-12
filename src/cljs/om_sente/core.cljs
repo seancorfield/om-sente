@@ -10,12 +10,9 @@
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [taoensso.sente :as s]
-            [cljs.core.async :as async :refer [<! >! chan]]
-            [strokes :refer [d3]]))
+            [cljs.core.async :as async :refer [<! >! chan]]))
 
 (enable-console-print!)
-
-(strokes/bootstrap)
 
 ;; create the Sente web socket connection stuff when we are loaded:
 
