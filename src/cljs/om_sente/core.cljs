@@ -100,7 +100,7 @@
                              (apply dom/svg #js {:id "display" :width "100%" :height graph-height}
                                     (map (fn [v1 v2 o]
                                            (let [h (* graph-scale v1)]
-                                             (dom/rect #js {:fill (make-color v2)
+                                             (dom/rect #js {:fill (make-color (max v1 v2))
                                                             :width graph-bar-width
                                                             :height h
                                                             :x (* (inc graph-bar-width) o)
