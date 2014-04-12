@@ -6,7 +6,7 @@
 
 (ns om-sente.server
   (:require [clojure.core.async :as async
-             :refer [<! <!! chan go]]
+             :refer [<! <!! chan go thread]]
             [clojure.core.cache :as cache]
             [compojure.core :refer [defroutes GET POST routes]]
             [compojure.handler :as h]
@@ -149,7 +149,7 @@
   []
   (go (loop [{:keys [client-uuid ring-req event] :as data} (<! ch-chsk)]
         (println "-" event)
-        (handle-event event ring-req)
+        (thread (handle-event event ring-req))
         (recur (<! ch-chsk)))))
 
 (defn -main
