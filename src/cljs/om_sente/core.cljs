@@ -57,15 +57,15 @@
   "Given a value (height) make a color for it. Returns #hex string."
   [v]
   (let [r v
-        g (int (- 150 (/ v 3)))
-        b (int (/ v 2))
-        hex (fn [n] (str (when (< n 16) "f") (.toString n 16)))]
+        g (Math/round (- 150 (/ v 3)))
+        b (Math/round (/ v 2))
+        hex (fn [n] (.substring (str (when (< n 16) "0") (.toString n 16)) 0 2))]
     (str "#" (hex r) (hex g) (hex b))))
 
 (defn make-target
   "Turn a string into a sequence of its characters' ASCII values."
   [s]
-  (map #(.charCodeAt %) s))
+  (take text-length (concat (map #(.charCodeAt %) s) (repeat 0))))
 
 (def animation-tick 75)
 (def animation-factor 15)
