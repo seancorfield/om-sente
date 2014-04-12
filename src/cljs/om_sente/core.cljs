@@ -38,6 +38,8 @@
     (chsk-send! [:test/echo (:text state)])
     (om/set-state! owner :text "")))
 
+(def text-length 32)
+
 (defn text-sender
   "Component that displays a text field and sends it to the server when ENTER is pressed."
   [app owner]
@@ -47,7 +49,7 @@
                 {:text ""})
     om/IRenderState
     (render-state [this state]
-                  (dom/input #js {:type "text" :value (:text state) :size 32 :maxLength 32
+                  (dom/input #js {:type "text" :value (:text state) :size text-length :maxLength text-length
                                   :onChange #(field-change % owner :text)
                                   :onKeyPress #(send-text-on-enter % owner state)}))))
 
@@ -79,15 +81,12 @@
     (will-mount [this]
                 (js/setTimeout (fn tick []
                                  (let [target-data (make-target (:data/text @app))
-                                       cur-data    (or (om/get-state owner :data) [])
-                                       next-data   (if (< (count cur-data) (count target-data))
-                                                     (vec (take (count target-data) (concat cur-data (repeat 0))))
-                                                     (vec (take (count target-data) cur-data)))]
+                                       next-data   (or (om/get-state owner :data) (vec (take text-length (repeat 0))))]
                                    (om/set-state! owner :data
                                                   (mapv (fn [d y]
                                                           (if (< d y)
                                                             (min y (+ (/ y animation-factor) d))
-                                                            (max y (- (/ y animation-factor) d))))
+                                                            (max y (- d (max animation-factor (/ d animation-factor))))))
                                                         next-data
                                                         target-data))
                                    (js/setTimeout tick animation-tick)))
