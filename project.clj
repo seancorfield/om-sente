@@ -7,6 +7,7 @@
                  [org.clojure/core.async "0.1.278.0-76b25b-alpha"]
                  [org.clojure/core.cache "0.6.3"]
                  [om "0.5.3"]
+                 [sablono "0.2.15"]
                  [com.taoensso/sente "0.9.0"]
                  [net.drib/strokes "0.5.1"]
                  [http-kit "2.1.18"]

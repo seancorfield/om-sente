@@ -8,6 +8,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [sablono.core :as html :refer-macros [html]]
             [taoensso.sente :as s]
             [cljs.core.async :as async :refer [<! >! chan]]
             [strokes :refer [d3]]))
@@ -49,9 +50,9 @@
                 {:text ""})
     om/IRenderState
     (render-state [this state]
-                  (dom/input #js {:type "text" :value (:text state) :size text-length :maxLength text-length
-                                  :onChange #(field-change % owner :text)
-                                  :onKeyPress #(send-text-on-enter % owner state)}))))
+                  (html [:input {:type "text" :value (:text state) :size text-length :max-length text-length
+                                 :on-change #(field-change % owner :text)
+                                 :on-key-press #(send-text-on-enter % owner state)}]))))
 
 (defn make-color
   "Given a value (height) make a color for it. Returns #hex string."
@@ -95,19 +96,19 @@
     (render-state [this {:keys [data]}]
                   (let [s (:data/text app)
                         t (make-target s)]
-                    (dom/div nil
-                             (dom/p nil (str "The string '" s "' represented as a bar chart:"))
-                             (apply dom/svg #js {:id "display" :width "100%" :height graph-height}
-                                    (map (fn [v1 v2 o]
-                                           (let [h (* graph-scale v1)]
-                                             (dom/rect #js {:fill (make-color (max v1 v2))
-                                                            :width graph-bar-width
-                                                            :height h
-                                                            :x (* (inc graph-bar-width) o)
-                                                            :y (- graph-height h)})))
-                                         data
-                                         t
-                                         (range))))))))
+                    (html [:div
+                           [:p (str "The string '" s "' represented as a bar chart:")]
+                           (into [:svg {:id "display" :width "100%" :height graph-height}]
+                                 (map (fn [v1 v2 o]
+                                        (let [h (* graph-scale v1)]
+                                          [:rect {:fill (make-color (max v1 v2))
+                                                  :width graph-bar-width
+                                                  :height h
+                                                  :x (* (inc graph-bar-width) o)
+                                                  :y (- graph-height h)}]))
+                                      data
+                                      t
+                                      (range)))])))))
 
 (defmulti handle-event
   "Handle events based on the event ID."
@@ -178,23 +179,22 @@
                 {:username "" :password ""})
     om/IRenderState
     (render-state [this state]
-                  (dom/div #js {:style #js {:margin "auto" :width "175"
-                                            :border "solid blue 1px" :padding 20}}
-                           (if-let [error (:notify/error app)]
-                             (dom/div #js {:style #js {:color "red"}}
-                                      error))
-                           (dom/h1 nil "Login")
-                           (dom/form #js {:onSubmit #(attempt-login % app owner)}
-                                     (dom/div nil
-                                              (dom/p nil "Username")
-                                              (dom/input #js {:ref "username" :type "text" :value (:username state)
-                                                              :onChange #(field-change % owner :username)}))
-                                     (dom/div nil
-                                              (dom/p nil "Password")
-                                              (dom/input #js {:ref "password" :type "password" :value (:password state)
-                                                              :onChange #(field-change % owner :password)}))
-                                     (dom/div nil
-                                              (dom/input #js {:type "submit" :value "Login"})))))))
+                  (html [:div {:style {:margin "auto" :width "175"
+                                       :border "solid blue 1px" :padding 20}}
+                         (when-let [error (:notify/error app)]
+                           [:div {:style #js {:color "red"}} error])
+                         [:h1 "Login"]
+                         [:form {:on-submit #(attempt-login % app owner)}
+                          [:div
+                           [:p "Username"]
+                           [:input {:ref "username" :type "text" :value (:username state)
+                                    :on-change #(field-change % owner :username)}]]
+                          [:div
+                           [:p "Password"]
+                           [:input {:ref "password" :type "password" :value (:password state)
+                                    :on-change #(field-change % owner :password)}]]
+                          [:div
+                           [:input {:type "submit" :value "Login"}]]]]))))
 
 (defn secured-application
   "Component that represents the secured portion of our application."
@@ -202,11 +202,11 @@
   (reify
     om/IRender
     (render [this]
-            (dom/div #js {:style #js {:margin "auto" :width "1000"
-                                      :border "solid blue 1px" :padding 20}}
-                     (dom/h1 nil "Test Sente")
-                     (om/build text-sender app {})
-                     (om/build animated-bar-graph app {})))))
+            (html [:div {:style {:margin "auto" :width "1000"
+                                 :border "solid blue 1px" :padding 20}}
+                   [:h1 "Test Sente"]
+                   (om/build text-sender app {})
+                   (om/build animated-bar-graph app {})]))))
 
 (defn application
   "Component that represents our application. Maintains session state.
