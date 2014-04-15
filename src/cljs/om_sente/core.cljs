@@ -193,46 +193,91 @@
                           [:div
                            [:input {:type "submit" :value "Login"}]]]]))))
 
+(defn line-graph
+  "Example from http://www.janwillemtulp.com/2011/04/01/tutorial-line-chart-in-d3/"
+  [raw-data]
+  (let [h 200 w 960 m 30
+        d (clj->js raw-data)
+        y-scale (.. js/d3 -scale linear
+                    (domain #js [(apply max raw-data) 0])
+                    (range #js [(+ 0 m) (- h m)]))
+        x-scale (.. js/d3 -scale linear
+                    (domain #js [0 (count raw-data)])
+                    (range #js [(+ 0 m) (- w m)]))
+        svg (.. js/d3 (select "#d3-node") (append "svg")
+                (attr #js {:width w :height h}))
+        g (.. svg (append "g"))
+        l (.. js/d3 -svg line (x (fn [d i] (x-scale i)))
+              (y (fn [d] (y-scale d))))]
+    ;; actual line
+    (.. g (append "path") (attr "d" (l d)))
+    ;; x-axis
+    (.. g (append "line") (attr "x1" (x-scale 0))
+        (attr "y1" (y-scale 0))
+        (attr "x2" (x-scale (count raw-data)))
+        (attr "y2" (y-scale 0)))
+    ;; y-axis
+    (.. g (append "line") (attr "x1" (x-scale 0))
+        (attr "y1" (y-scale 0))
+        (attr "x2" (x-scale 0))
+        (attr "y2" (y-scale (apply max raw-data))))
+    ;; x-label
+    (.. g (selectAll ".xLabel") (data (.ticks x-scale 5))
+        enter (append "text")
+        (attr "class" "xLabel")
+        (text js/String)
+        (attr "x" (fn [d] (x-scale d)))
+        (attr "y" (- h 5))
+        (attr "text-anchor" "middle"))
+    ;; y-label
+    (.. g (selectAll ".yLabel") (data (.ticks y-scale 4))
+        enter (append "text")
+        (attr "class" "yLabel")
+        (text js/String)
+        (attr "x" (/ m 1.5))
+        (attr "y" (fn [d] (y-scale d)))
+        (attr "text-anchor" "end"))
+    ;; x-ticks
+    (.. g (selectAll "xTicks") (data (.ticks x-scale 5))
+        enter (append "line")
+        (attr "class" "xTicks")
+        (attr "x1" (fn [d] (x-scale d)))
+        (attr "y1" (y-scale 0))
+        (attr "x2" (fn [d] (x-scale d)))
+        (attr "y2" (+ (y-scale 0) 5)))
+    ;; y-ticks
+    (.. g (selectAll "yTicks") (data (.ticks y-scale 4))
+        enter (append "line")
+        (attr "class" "yTicks")
+        (attr "x1" (- (x-scale 0) 5))
+        (attr "y1" (fn [d] (y-scale d)))
+        (attr "x2" (x-scale 0))
+        (attr "y2" (fn [d] (y-scale d))))))
+
+(defn graph-data-changing
+  [old new]
+  (not= (:data/text old) (:data/text new)))
+
 (defn d3-test
   "Component that tests D3 / Om / React integration."
   [app owner]
   (reify
-    om/IInitState
-    (init-state [this]
-                {:data (vec (repeatedly 100 #(rand-int 100)))})
     om/IDidMount
     (did-mount [this]
-               (let [h 500 w 960 m 20
-                     d-raw (om/get-state owner :data)
-                     d (clj->js d-raw)
-                     y (.. js/d3 -scale linear
-                           (domain #js [0 (apply max d-raw)])
-                           (range #js [(+ 0 m) (- h m)]))
-                     x (.. js/d3 -scale linear
-                           (domain #js [0 (count d-raw)])
-                           (range #js [(+ 0 m) (- w m)]))
-                     svg (.. js/d3 (select "#d3-node") (append "svg")
-                             (attr #js {:width w :height h}))
-                     g (.. svg (append "g")
-                           (attr "transform" (str "transform(0, " h ")")))
-                     l (.. js/d3 -svg line (x (fn [d i] (x i)))
-                           (y (fn [d] (- (y d)))))]
-                 (println l)
-                 (.. g (append "path") (attr "d" (l d)))
-                 (.. g (append "line") (attr "x1" (x 0))
-                     (attr "y1" (- (y 0)))
-                     (attr "x2" (x w))
-                     (attr "y2" (- (y 0))))
-                 (.. g (append "line") (attr "x1" (x 0))
-                     (attr "y1" (- (y 0)))
-                     (attr "x2" (x 0))
-                     (attr "y2" (- (y (apply max d-raw)))))
-
-                 ))
+               (println "d3 did-mount - draw line when first mounted")
+               (line-graph (vec (make-target (:data/text app)))))
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+                (when (graph-data-changing prev-props app)
+                  (println "d3 did-update app state change - redraw line")
+                  (.remove (.-firstChild (om/get-node owner "d3-node")))
+                  (line-graph (vec (make-target (:data/text app))))))
     om/IRender
     (render [this]
             (println "d3 render state")
-            (dom/div #js {:react-key "d3-test-graph" :id "d3-node"}))))
+            (dom/div #js {:react-key "d3-node" ;; ensure React knows this is non-reusable
+                          :ref "d3-node"       ;; label it so we can retrieve it via get-node
+                          :id "d3-node"}))))   ;; set id so D3 can find it!
 
 (defn secured-application
   "Component that represents the secured portion of our application."
