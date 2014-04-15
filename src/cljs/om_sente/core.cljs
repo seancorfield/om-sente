@@ -193,6 +193,31 @@
                           [:div
                            [:input {:type "submit" :value "Login"}]]]]))))
 
+(defn d3-test
+  "Component that tests D3 / Om / React integration."
+  [app owner]
+  (reify
+    om/IInitState
+    (init-state [this]
+                (println "d3 init")
+                {:data (map vector (range 100) (repeatedly 100 #(rand-int 100)))})
+    om/IDidMount
+    (did-mount [this]
+               (println "d3 did-mount")
+               (let [svg (-> js/d3 (.select "#d3-node") (.append "svg")
+                             (.attr #js {:width 960 :height 500}))]
+                 (-> svg (.append "circle")
+                     (.attr #js {:cx 350 :cy 200 :r 200 :class "left"}))
+                 (-> svg (.append "circle")
+                     (.attr #js {:cx 550 :cy 200 :r 200 :class "right"}))
+                 (-> svg (.append "circle")
+                     (.attr #js {:cx 450 :cy 300 :r 200 :class "bottom"}))))
+    om/IRender
+    (render [this]
+            (println "d3 render state")
+            (dom/div #js {:react-key "d3-test-graph" :id "d3-node"}))
+))
+
 (defn secured-application
   "Component that represents the secured portion of our application."
   [app owner]
@@ -203,7 +228,8 @@
                                  :border "solid blue 1px" :padding 20}}
                    [:h1 "Test Sente"]
                    (om/build text-sender app {})
-                   (om/build animated-bar-graph app {})]))))
+                   (om/build animated-bar-graph app {})
+                   (om/build d3-test app {})]))))
 
 (defn application
   "Component that represents our application. Maintains session state.
