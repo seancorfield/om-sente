@@ -93,7 +93,7 @@
     (render-state [this {:keys [data]}]
                   (let [s (:data/text app)
                         t (make-target s)]
-                    (html [:div
+                    (html [:div {:style {:height 600}}
                            [:p (str "The string '" s "' represented as a bar chart:")]
                            (into [:svg {:id "display" :width "100%" :height graph-height}]
                                  (map (fn [v1 v2 o]
@@ -264,20 +264,58 @@
   (reify
     om/IDidMount
     (did-mount [this]
-               (println "d3 did-mount - draw line when first mounted")
                (line-graph (vec (make-target (:data/text app)))))
     om/IDidUpdate
     (did-update [this prev-props prev-state]
                 (when (graph-data-changing prev-props app)
-                  (println "d3 did-update app state change - redraw line")
                   (.remove (.-firstChild (om/get-node owner "d3-node")))
                   (line-graph (vec (make-target (:data/text app))))))
     om/IRender
     (render [this]
-            (println "d3 render state")
-            (dom/div #js {:react-key "d3-node" ;; ensure React knows this is non-reusable
+            (dom/div #js {:style #js {:height 300}
+                          :react-key "d3-node" ;; ensure React knows this is non-reusable
                           :ref "d3-node"       ;; label it so we can retrieve it via get-node
                           :id "d3-node"}))))   ;; set id so D3 can find it!
+
+(defn nv-line-graph
+  "Draw a graph of the supplied data using NVD3."
+  [raw-data]
+  (let [chart (.. js/nv -models lineChart
+                  (margin #js {:left 100})
+                  (useInteractiveGuideline true)
+                  (transitionDuration 350)
+                  (showLegend true)
+                  (showYAxis true)
+                  (showXAxis true))]
+    (.. chart -xAxis (axisLabel "Character") (tickFormat (.format js/d3 ",r")))
+    (.. chart -yAxis (axisLabel "ASCII") (tickFormat (.format js/d3 ",r")))
+    (.. js/d3 (select "#nv-node") (append "svg")
+        (datum #js [
+                    #js {:values (clj->js raw-data)
+                         :key "Text Data"
+                         :color "red"
+                         }
+                    ])
+        (call chart))))
+
+(defn nvd3-test
+  "Component that tests NVD3 graph."
+  [app owner]
+  (reify
+    om/IDidMount
+    (did-mount [this]
+               (nv-line-graph (mapv (fn [a b] {:y a :x b}) (make-target (:data/text app)) (range))))
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+                (when (graph-data-changing prev-props app)
+                  (.remove (.-firstChild (om/get-node owner "nv-node")))
+                  (nv-line-graph (mapv (fn [a b] {:y a :x b}) (make-target (:data/text app)) (range)))))
+    om/IRender
+    (render [this]
+            (dom/div #js {:style #js {:height 500}
+                          :react-key "nv-node"
+                          :ref "nv-node"
+                          :id "nv-node"}))))
 
 (defn secured-application
   "Component that represents the secured portion of our application."
@@ -290,7 +328,8 @@
                    [:h1 "Test Sente"]
                    (om/build text-sender app {})
                    (om/build animated-bar-graph app {})
-                   (om/build d3-test app {})]))))
+                   (om/build d3-test app {})
+                   (om/build nvd3-test app {})]))))
 
 (defn application
   "Component that represents our application. Maintains session state.
