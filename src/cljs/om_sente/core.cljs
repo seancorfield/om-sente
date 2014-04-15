@@ -67,9 +67,9 @@
 
 (def animation-tick 75)
 (def animation-factor 15)
-(def graph-scale 4)
+(def graph-scale 3)
 (def graph-bar-width 30)
-(def graph-height 500)
+(def graph-height 400)
 
 (defn animated-bar-graph
   "Component that displays the data (text) returned by the server after processing."
@@ -93,7 +93,7 @@
     (render-state [this {:keys [data]}]
                   (let [s (:data/text app)
                         t (make-target s)]
-                    (html [:div {:style {:height 600}}
+                    (html [:div {:style {:height (+ 100 graph-height)}}
                            [:p (str "The string '" s "' represented as a bar chart:")]
                            (into [:svg {:id "display" :width "100%" :height graph-height}]
                                  (map (fn [v1 v2 o]
@@ -272,7 +272,7 @@
                   (line-graph (vec (make-target (:data/text app))))))
     om/IRender
     (render [this]
-            (dom/div #js {:style #js {:height 300}
+            (dom/div #js {:style #js {:height 250}
                           :react-key "d3-node" ;; ensure React knows this is non-reusable
                           :ref "d3-node"       ;; label it so we can retrieve it via get-node
                           :id "d3-node"}))))   ;; set id so D3 can find it!
@@ -312,7 +312,7 @@
                   (nv-line-graph (mapv (fn [a b] {:y a :x b}) (make-target (:data/text app)) (range)))))
     om/IRender
     (render [this]
-            (dom/div #js {:style #js {:height 500}
+            (dom/div #js {:style #js {:height 400}
                           :react-key "nv-node"
                           :ref "nv-node"
                           :id "nv-node"}))))
