@@ -199,24 +199,40 @@
   (reify
     om/IInitState
     (init-state [this]
-                (println "d3 init")
-                {:data (map vector (range 100) (repeatedly 100 #(rand-int 100)))})
+                {:data (vec (repeatedly 100 #(rand-int 100)))})
     om/IDidMount
     (did-mount [this]
-               (println "d3 did-mount")
-               (let [svg (-> js/d3 (.select "#d3-node") (.append "svg")
-                             (.attr #js {:width 960 :height 500}))]
-                 (-> svg (.append "circle")
-                     (.attr #js {:cx 350 :cy 200 :r 200 :class "left"}))
-                 (-> svg (.append "circle")
-                     (.attr #js {:cx 550 :cy 200 :r 200 :class "right"}))
-                 (-> svg (.append "circle")
-                     (.attr #js {:cx 450 :cy 300 :r 200 :class "bottom"}))))
+               (let [h 500 w 960 m 20
+                     d-raw (om/get-state owner :data)
+                     d (clj->js d-raw)
+                     y (.. js/d3 -scale linear
+                           (domain #js [0 (apply max d-raw)])
+                           (range #js [(+ 0 m) (- h m)]))
+                     x (.. js/d3 -scale linear
+                           (domain #js [0 (count d-raw)])
+                           (range #js [(+ 0 m) (- w m)]))
+                     svg (.. js/d3 (select "#d3-node") (append "svg")
+                             (attr #js {:width w :height h}))
+                     g (.. svg (append "g")
+                           (attr "transform" (str "transform(0, " h ")")))
+                     l (.. js/d3 -svg line (x (fn [d i] (x i)))
+                           (y (fn [d] (- (y d)))))]
+                 (println l)
+                 (.. g (append "path") (attr "d" (l d)))
+                 (.. g (append "line") (attr "x1" (x 0))
+                     (attr "y1" (- (y 0)))
+                     (attr "x2" (x w))
+                     (attr "y2" (- (y 0))))
+                 (.. g (append "line") (attr "x1" (x 0))
+                     (attr "y1" (- (y 0)))
+                     (attr "x2" (x 0))
+                     (attr "y2" (- (y (apply max d-raw)))))
+
+                 ))
     om/IRender
     (render [this]
             (println "d3 render state")
-            (dom/div #js {:react-key "d3-test-graph" :id "d3-node"}))
-))
+            (dom/div #js {:react-key "d3-test-graph" :id "d3-node"}))))
 
 (defn secured-application
   "Component that represents the secured portion of our application."
