@@ -289,7 +289,7 @@
                   (showXAxis true))]
     (.. chart -xAxis (axisLabel "Character") (tickFormat (.format js/d3 ",r")))
     (.. chart -yAxis (axisLabel "ASCII") (tickFormat (.format js/d3 ",r")))
-    (.. js/d3 (select "#nv-node") (append "svg")
+    (.. js/d3 (select "#nv-node svg")
         (datum #js [
                     #js {:values (clj->js raw-data)
                          :key "Text Data"
@@ -308,14 +308,16 @@
     om/IDidUpdate
     (did-update [this prev-props prev-state]
                 (when (graph-data-changing prev-props app)
-                  (.remove (.-firstChild (om/get-node owner "nv-node")))
+                  ;; no need to remove the SVG node, we can just pour new data into it
                   (nv-line-graph (mapv (fn [a b] {:y a :x b}) (make-target (:data/text app)) (range)))))
     om/IRender
     (render [this]
             (dom/div #js {:style #js {:height 400}
                           :react-key "nv-node"
                           :ref "nv-node"
-                          :id "nv-node"}))))
+                          :id "nv-node"}
+                     ;; add the SVG node once, NVD3 updates the data via transition
+                     (dom/svg nil)))))
 
 (defn secured-application
   "Component that represents the secured portion of our application."
