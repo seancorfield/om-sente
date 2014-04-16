@@ -12,7 +12,7 @@
             [taoensso.sente :as s]
             [cljs.core.async :as async :refer [<! >! chan]]))
 
-(enable-console-print!)
+#_(enable-console-print!)
 
 ;; create the Sente web socket connection stuff when we are loaded:
 
@@ -121,7 +121,7 @@
 
 (defmethod handle-event :default
   [event app owner]
-  (println "UNKNOWN EVENT" event))
+  #_(println "UNKNOWN EVENT" event))
 
 ;; Remember the session state in the application component's local state:
 
@@ -150,7 +150,7 @@
   "Handle inbound events."
   [app owner]
   (go (loop [[op arg] (<! ch-chsk)]
-        (println "-" op)
+        #_(println "-" op)
         (case op
           :chsk/recv (handle-event arg app owner)
           ;; we ignore other Sente events
