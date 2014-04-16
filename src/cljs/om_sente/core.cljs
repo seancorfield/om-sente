@@ -70,6 +70,7 @@
 (def graph-scale 3)
 (def graph-bar-width 30)
 (def graph-height 400)
+(def bar-gap 1)
 
 (defn animated-bar-graph
   "Component that displays the data (text) returned by the server after processing."
@@ -101,7 +102,7 @@
                                           [:rect {:fill (make-color (max v1 v2))
                                                   :width graph-bar-width
                                                   :height h
-                                                  :x (* (inc graph-bar-width) o)
+                                                  :x (* (+ bar-gap graph-bar-width) o)
                                                   :y (- graph-height h)}]))
                                       data
                                       t
