@@ -197,7 +197,7 @@
 (defn line-graph
   "Example from http://www.janwillemtulp.com/2011/04/01/tutorial-line-chart-in-d3/"
   [raw-data]
-  (let [h 200 w 960 m 30
+  (let [h 380 w 480 m 30
         d (clj->js raw-data)
         y-scale (.. js/d3 -scale linear
                     (domain #js [(apply max raw-data) 0])
@@ -273,7 +273,7 @@
                   (line-graph (vec (make-target (:data/text app))))))
     om/IRender
     (render [this]
-            (dom/div #js {:style #js {:height 250}
+            (dom/div #js {:style #js {:height 400 :float "right" :width "50%"}
                           :react-key "d3-node" ;; ensure React knows this is non-reusable
                           :ref "d3-node"       ;; label it so we can retrieve it via get-node
                           :id "d3-node"}))))   ;; set id so D3 can find it!
@@ -313,7 +313,7 @@
                   (nv-line-graph (mapv (fn [a b] {:y a :x b}) (make-target (:data/text app)) (range)))))
     om/IRender
     (render [this]
-            (dom/div #js {:style #js {:height 400}
+            (dom/div #js {:style #js {:height 400 :float "left" :width "50%"}
                           :react-key "nv-node"
                           :id "nv-node"}
                      ;; add the SVG node once, NVD3 updates the data via transition
@@ -331,7 +331,8 @@
                    (om/build text-sender app {})
                    (om/build animated-bar-graph app {})
                    (om/build d3-test app {})
-                   (om/build nvd3-test app {})]))))
+                   (om/build nvd3-test app {})
+                   [:div {:style {:clear "both"}}]]))))
 
 (defn application
   "Component that represents our application. Maintains session state.
