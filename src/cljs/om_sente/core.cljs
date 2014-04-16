@@ -314,7 +314,6 @@
     (render [this]
             (dom/div #js {:style #js {:height 400}
                           :react-key "nv-node"
-                          :ref "nv-node"
                           :id "nv-node"}
                      ;; add the SVG node once, NVD3 updates the data via transition
                      (dom/svg nil)))))
