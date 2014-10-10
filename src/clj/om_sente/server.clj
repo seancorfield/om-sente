@@ -131,7 +131,7 @@
 
 ;; When the client pings us, send back the session state:
 
-(defmethod handle-event :chsk/ping
+(defmethod handle-event :chsk/ws-ping
   [_ req]
   (session-status req))
 
