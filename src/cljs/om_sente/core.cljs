@@ -16,11 +16,12 @@
 
 ;; create the Sente web socket connection stuff when we are loaded:
 
-(let [{:keys [chsk ch-recv send-fn]}
-      (s/make-channel-socket! "/ws" {} {:type :auto})]
+(let [{:keys [chsk ch-recv send-fn state]}
+      (s/make-channel-socket! "/ws" {:type :auto})]
   (def chsk       chsk)
   (def ch-chsk    ch-recv)
-  (def chsk-send! send-fn))
+  (def chsk-send! send-fn)
+  (def chsk-state chsk-state))
 
 (defn field-change
   "Generic input field updater. Keeps state in sync with input."
@@ -32,9 +33,11 @@
   "When user presses ENTER, send the value of the field to the server
   and clear the field's input state."
   [e owner state]
-  (when (== (.-keyCode e) 13)
-    (chsk-send! [:test/echo (:text state)])
-    (om/set-state! owner :text "")))
+  (let [kc (.-keyCode e)
+        w (.-which e)]
+    (when (or (== kc 13) (== w 13))
+      (chsk-send! [:test/echo (:text state)])
+      (om/set-state! owner :text ""))))
 
 (def text-length 32)
 
@@ -150,13 +153,13 @@
 (defn event-loop
   "Handle inbound events."
   [app owner]
-  (go (loop [[op arg] (<! ch-chsk)]
+  (go (loop [[op arg] (:event (<! ch-chsk))]
         #_(println "-" op)
         (case op
           :chsk/recv (handle-event arg app owner)
           ;; we ignore other Sente events
           (test-session owner))
-        (recur (<! ch-chsk)))))
+        (recur (:event (<! ch-chsk))))))
 
 (defn attempt-login
   "Handle the login event - send credentials to the server."

@@ -3,18 +3,18 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2173"] ;; 2199
-                 [org.clojure/core.async "0.1.278.0-76b25b-alpha"]
-                 [org.clojure/core.cache "0.6.3"]
-                 [om "0.5.3"]
-                 [sablono "0.2.15"]
-                 [com.taoensso/sente "0.9.0"]
-                 [http-kit "2.1.18"]
-                 [compojure "1.1.6"]
-                 [ring/ring-core "1.2.2"]
+                 [org.clojure/clojurescript "0.0-2356"] ;; 2199
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [org.clojure/core.cache "0.6.4"]
+                 [om "0.7.3"]
+                 [sablono "0.2.22"]
+                 [com.taoensso/sente "1.2.0"]
+                 [http-kit "2.1.19"]
+                 [compojure "1.2.0"]
+                 [ring/ring-core "1.3.1"]
                  [jetty/javax.servlet "5.1.12"]]
 
-  :plugins [[lein-cljsbuild "1.0.2"]] ;; 1.0.3
+  :plugins [[lein-cljsbuild "1.0.3"]] ;; 1.0.3
 
   :source-paths ["src/clj"]
 
